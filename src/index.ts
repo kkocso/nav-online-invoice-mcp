@@ -76,6 +76,8 @@ export default function createServer({ config }: { config: z.infer<typeof config
   const server = new McpServer({
     name: "nav-online-invoice",
     version: "1.0.0",
+    description: "MCP server for the Hungarian NAV Online Invoice (Online Számla) API v3.0. Query taxpayers, search invoices, check invoice status, and submit invoices to NAV.",
+    websiteUrl: "https://github.com/Szotasz/nav-online-invoice-mcp",
   });
 
   // --- Query Tools (read-only, safe) ---
@@ -86,6 +88,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
     {
       taxNumber: z.string().length(8).describe("8-digit Hungarian tax number (adoszam)"),
     },
+    { title: "Query Taxpayer", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async ({ taxNumber }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryTaxpayer(taxNumber);
@@ -102,6 +105,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
       batchIndex: z.number().optional().describe("Batch index if part of a batch invoice"),
       supplierTaxNumber: z.string().optional().describe("Supplier tax number (only for INBOUND)"),
     },
+    { title: "Get Invoice Data", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async ({ invoiceNumber, invoiceDirection, batchIndex, supplierTaxNumber }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryInvoiceData(
@@ -128,6 +132,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
       paymentMethod: z.enum(["TRANSFER", "CASH", "CARD", "VOUCHER", "OTHER"]).optional(),
       currency: z.string().optional().describe("Currency code (e.g. HUF, EUR)"),
     },
+    { title: "Search Invoices", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async (params) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryInvoiceDigest(params);
@@ -144,6 +149,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
       batchIndex: z.number().optional(),
       supplierTaxNumber: z.string().optional(),
     },
+    { title: "Check Invoice Existence", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async ({ invoiceNumber, invoiceDirection, batchIndex, supplierTaxNumber }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryInvoiceCheck(
@@ -162,6 +168,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
       invoiceDirection: z.enum(["INBOUND", "OUTBOUND"]),
       taxNumber: z.string().optional().describe("Partner tax number"),
     },
+    { title: "Invoice Modification Chain", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async ({ page, invoiceNumber, invoiceDirection, taxNumber }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryInvoiceChainDigest(
@@ -178,6 +185,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
       transactionId: z.string().describe("Transaction ID from manageInvoice response"),
       returnOriginalRequest: z.boolean().default(false).describe("Include original request data"),
     },
+    { title: "Transaction Status", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async ({ transactionId, returnOriginalRequest }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryTransactionStatus(
@@ -196,6 +204,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
       insDateTo: z.string().describe("To datetime (ISO 8601)"),
       requestStatus: z.string().optional().describe("Filter by status"),
     },
+    { title: "List Transactions", readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     async ({ page, insDateFrom, insDateTo, requestStatus }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml } = await client.queryTransactionList(
@@ -225,6 +234,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
         .describe("Array of invoice operations (max 100)"),
       compressed: z.boolean().default(false).describe("Whether invoiceData is GZIP compressed"),
     },
+    { title: "Submit Invoice", readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     async ({ operations, compressed }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml, transactionId } = await client.manageInvoice(operations, compressed);
@@ -248,6 +258,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
         .min(1)
         .max(100),
     },
+    { title: "Annul Invoice", readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     async ({ operations }) => {
       const client = new NavClient(getConfig(config));
       const { result, data, rawXml, transactionId } = await client.manageAnnulment(operations);
@@ -255,6 +266,62 @@ export default function createServer({ config }: { config: z.infer<typeof config
       const extra = transactionId ? `\n**Transaction ID**: \`${transactionId}\`` : "";
       return { content: [{ type: "text", text: response + extra }] };
     }
+  );
+
+  // --- Prompts ---
+
+  server.prompt(
+    "search-invoices",
+    "Search for invoices issued or received within a date range",
+    {
+      direction: z.enum(["INBOUND", "OUTBOUND"]).describe("INBOUND = received, OUTBOUND = issued"),
+      dateFrom: z.string().describe("Start date (YYYY-MM-DD)"),
+      dateTo: z.string().describe("End date (YYYY-MM-DD)"),
+    },
+    ({ direction, dateFrom, dateTo }) => ({
+      messages: [{
+        role: "user",
+        content: {
+          type: "text",
+          text: `Search for ${direction === "OUTBOUND" ? "issued" : "received"} invoices from ${dateFrom} to ${dateTo} using the query_invoice_digest tool. Show the results in a clear table format with invoice number, date, partner name, and amount.`,
+        },
+      }],
+    })
+  );
+
+  server.prompt(
+    "check-taxpayer",
+    "Look up a Hungarian taxpayer by their tax number",
+    {
+      taxNumber: z.string().describe("8-digit Hungarian tax number"),
+    },
+    ({ taxNumber }) => ({
+      messages: [{
+        role: "user",
+        content: {
+          type: "text",
+          text: `Look up taxpayer information for tax number ${taxNumber} using the query_taxpayer tool. Show the company name, full address, and VAT status.`,
+        },
+      }],
+    })
+  );
+
+  server.prompt(
+    "invoice-details",
+    "Get complete details of a specific invoice",
+    {
+      invoiceNumber: z.string().describe("Invoice number to look up"),
+      direction: z.enum(["INBOUND", "OUTBOUND"]).describe("INBOUND = received, OUTBOUND = issued"),
+    },
+    ({ invoiceNumber, direction }) => ({
+      messages: [{
+        role: "user",
+        content: {
+          type: "text",
+          text: `Get the full details of invoice ${invoiceNumber} (${direction === "OUTBOUND" ? "issued" : "received"}) using the query_invoice_data tool. Show all relevant information including items, amounts, tax details, and partner information.`,
+        },
+      }],
+    })
   );
 
   // Smithery expects server.server (the low-level Server instance)
