@@ -1,0 +1,36 @@
+{
+  "name": "nav-online-invoice-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Hungarian NAV Online Invoice (Online Szamla) API v3.0",
+  "main": "dist/index.js",
+  "bin": {
+    "nav-online-invoice-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "keywords": [
+    "nav",
+    "online-invoice",
+    "online-szamla",
+    "hungary",
+    "tax",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "fast-xml-parser": "^5.2.0",
+    "js-sha3": "^0.9.3",
+    "js-sha512": "^0.9.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
