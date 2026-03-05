@@ -1,4 +1,4 @@
-import { createHash, createDecipheriv } from "node:crypto";
+import { createHash, createDecipheriv, randomBytes } from "node:crypto";
 import { sha3_512 } from "js-sha3";
 
 export function sha512(input: string): string {
@@ -58,8 +58,9 @@ export function generateRequestId(): string {
   const prefix = "MCP";
   const timestamp = Date.now().toString(36).toUpperCase();
   let result = prefix + timestamp;
+  const bytes = randomBytes(30);
   while (result.length < 30) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(bytes[result.length] % chars.length);
   }
   return result.substring(0, 30);
 }

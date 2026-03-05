@@ -97,9 +97,9 @@ export function buildQueryInvoiceDataBody(
 ): string {
   let body = `<invoiceNumberQuery>
     <invoiceNumber>${escapeXml(invoiceNumber)}</invoiceNumber>
-    <invoiceDirection>${invoiceDirection}</invoiceDirection>`;
+    <invoiceDirection>${escapeXml(invoiceDirection)}</invoiceDirection>`;
   if (batchIndex !== undefined) {
-    body += `\n    <batchIndex>${batchIndex}</batchIndex>`;
+    body += `\n    <batchIndex>${Number(batchIndex)}</batchIndex>`;
   }
   if (supplierTaxNumber) {
     body += `\n    <supplierTaxNumber>${escapeXml(supplierTaxNumber)}</supplierTaxNumber>`;
@@ -127,13 +127,13 @@ export function buildQueryInvoiceDigestBody(params: {
   let mandatory = "";
   if (params.dateFrom && params.dateTo) {
     mandatory = `<invoiceIssueDate>
-        <dateFrom>${params.dateFrom}</dateFrom>
-        <dateTo>${params.dateTo}</dateTo>
+        <dateFrom>${escapeXml(params.dateFrom)}</dateFrom>
+        <dateTo>${escapeXml(params.dateTo)}</dateTo>
       </invoiceIssueDate>`;
   } else if (params.insDateTimeFrom && params.insDateTimeTo) {
     mandatory = `<insDate>
-        <dateTimeFrom>${params.insDateTimeFrom}</dateTimeFrom>
-        <dateTimeTo>${params.insDateTimeTo}</dateTimeTo>
+        <dateTimeFrom>${escapeXml(params.insDateTimeFrom)}</dateTimeFrom>
+        <dateTimeTo>${escapeXml(params.insDateTimeTo)}</dateTimeTo>
       </insDate>`;
   } else if (params.originalInvoiceNumber) {
     mandatory = `<originalInvoiceNumber>${escapeXml(params.originalInvoiceNumber)}</originalInvoiceNumber>`;
@@ -143,18 +143,18 @@ export function buildQueryInvoiceDigestBody(params: {
   const addParams: string[] = [];
   if (params.taxNumber) addParams.push(`<taxNumber>${escapeXml(params.taxNumber)}</taxNumber>`);
   if (params.name) addParams.push(`<name>${escapeXml(params.name)}</name>`);
-  if (params.invoiceCategory) addParams.push(`<invoiceCategory>${params.invoiceCategory}</invoiceCategory>`);
-  if (params.paymentMethod) addParams.push(`<paymentMethod>${params.paymentMethod}</paymentMethod>`);
-  if (params.invoiceAppearance) addParams.push(`<invoiceAppearance>${params.invoiceAppearance}</invoiceAppearance>`);
-  if (params.source) addParams.push(`<source>${params.source}</source>`);
+  if (params.invoiceCategory) addParams.push(`<invoiceCategory>${escapeXml(params.invoiceCategory)}</invoiceCategory>`);
+  if (params.paymentMethod) addParams.push(`<paymentMethod>${escapeXml(params.paymentMethod)}</paymentMethod>`);
+  if (params.invoiceAppearance) addParams.push(`<invoiceAppearance>${escapeXml(params.invoiceAppearance)}</invoiceAppearance>`);
+  if (params.source) addParams.push(`<source>${escapeXml(params.source)}</source>`);
   if (params.currency) addParams.push(`<currency>${escapeXml(params.currency)}</currency>`);
 
   if (addParams.length > 0) {
     additional = `\n  <additionalQueryParams>\n    ${addParams.join("\n    ")}\n  </additionalQueryParams>`;
   }
 
-  return `<page>${params.page}</page>
-  <invoiceDirection>${params.invoiceDirection}</invoiceDirection>
+  return `<page>${Number(params.page)}</page>
+  <invoiceDirection>${escapeXml(params.invoiceDirection)}</invoiceDirection>
   <invoiceQueryParams>
     <mandatoryQueryParams>
       ${mandatory}
@@ -171,7 +171,7 @@ export function buildQueryTransactionStatusBody(
   returnOriginalRequest: boolean = false
 ): string {
   return `<transactionId>${escapeXml(transactionId)}</transactionId>
-  <returnOriginalRequest>${returnOriginalRequest}</returnOriginalRequest>`;
+  <returnOriginalRequest>${Boolean(returnOriginalRequest)}</returnOriginalRequest>`;
 }
 
 export function buildQueryTransactionListBody(
@@ -180,11 +180,11 @@ export function buildQueryTransactionListBody(
   insDateTo: string,
   requestStatus?: string
 ): string {
-  let body = `<page>${page}</page>
-  <insDateFrom>${insDateFrom}</insDateFrom>
-  <insDateTo>${insDateTo}</insDateTo>`;
+  let body = `<page>${Number(page)}</page>
+  <insDateFrom>${escapeXml(insDateFrom)}</insDateFrom>
+  <insDateTo>${escapeXml(insDateTo)}</insDateTo>`;
   if (requestStatus) {
-    body += `\n  <requestStatus>${requestStatus}</requestStatus>`;
+    body += `\n  <requestStatus>${escapeXml(requestStatus)}</requestStatus>`;
   }
   return body;
 }
@@ -195,10 +195,10 @@ export function buildQueryInvoiceChainDigestBody(
   invoiceDirection: string,
   taxNumber?: string
 ): string {
-  let body = `<page>${page}</page>
+  let body = `<page>${Number(page)}</page>
   <invoiceChainQuery>
     <invoiceNumber>${escapeXml(invoiceNumber)}</invoiceNumber>
-    <invoiceDirection>${invoiceDirection}</invoiceDirection>`;
+    <invoiceDirection>${escapeXml(invoiceDirection)}</invoiceDirection>`;
   if (taxNumber) {
     body += `\n    <taxNumber>${escapeXml(taxNumber)}</taxNumber>`;
   }
@@ -214,9 +214,9 @@ export function buildQueryInvoiceCheckBody(
 ): string {
   let body = `<invoiceNumberQuery>
     <invoiceNumber>${escapeXml(invoiceNumber)}</invoiceNumber>
-    <invoiceDirection>${invoiceDirection}</invoiceDirection>`;
+    <invoiceDirection>${escapeXml(invoiceDirection)}</invoiceDirection>`;
   if (batchIndex !== undefined) {
-    body += `\n    <batchIndex>${batchIndex}</batchIndex>`;
+    body += `\n    <batchIndex>${Number(batchIndex)}</batchIndex>`;
   }
   if (supplierTaxNumber) {
     body += `\n    <supplierTaxNumber>${escapeXml(supplierTaxNumber)}</supplierTaxNumber>`;
@@ -238,11 +238,11 @@ export function buildManageInvoiceBody(
   const ops = operations
     .map((op) => {
       let opXml = `<invoiceOperation>
-      <index>${op.index}</index>
-      <invoiceOperation>${op.operation}</invoiceOperation>
-      <invoiceData>${op.invoiceData}</invoiceData>`;
+      <index>${Number(op.index)}</index>
+      <invoiceOperation>${escapeXml(op.operation)}</invoiceOperation>
+      <invoiceData>${escapeXml(op.invoiceData)}</invoiceData>`;
       if (op.electronicInvoiceHash) {
-        opXml += `\n      <electronicInvoiceHash cryptoType="SHA3-512">${op.electronicInvoiceHash}</electronicInvoiceHash>`;
+        opXml += `\n      <electronicInvoiceHash cryptoType="SHA3-512">${escapeXml(op.electronicInvoiceHash)}</electronicInvoiceHash>`;
       }
       opXml += `\n    </invoiceOperation>`;
       return opXml;
@@ -251,7 +251,7 @@ export function buildManageInvoiceBody(
 
   return `<exchangeToken>${escapeXml(exchangeToken)}</exchangeToken>
   <invoiceOperations>
-    <compressedContent>${compressed}</compressedContent>
+    <compressedContent>${Boolean(compressed)}</compressedContent>
     ${ops}
   </invoiceOperations>`;
 }
@@ -266,9 +266,9 @@ export function buildManageAnnulmentBody(
   const ops = operations
     .map(
       (op) => `<annulmentOperation>
-      <index>${op.index}</index>
+      <index>${Number(op.index)}</index>
       <annulmentOperation>ANNUL</annulmentOperation>
-      <invoiceAnnulment>${op.annulmentData}</invoiceAnnulment>
+      <invoiceAnnulment>${escapeXml(op.annulmentData)}</invoiceAnnulment>
     </annulmentOperation>`
     )
     .join("\n    ");
