@@ -1,25 +1,25 @@
-#!/usr/bin/env node
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { NavClient } from "./nav-client.js";
 import type { NavConfig } from "./types.js";
 
-interface SmitheryConfig {
-  NAV_LOGIN?: string;
-  NAV_PASSWORD?: string;
-  NAV_TAX_NUMBER?: string;
-  NAV_SIGNATURE_KEY?: string;
-  NAV_EXCHANGE_KEY?: string;
-  NAV_ENV?: string;
-  NAV_SOFTWARE_ID?: string;
-  NAV_SOFTWARE_DEV_NAME?: string;
-  NAV_SOFTWARE_DEV_CONTACT?: string;
-  NAV_SOFTWARE_DEV_TAX_NUMBER?: string;
-}
+// Smithery config schema — exported so Smithery auto-generates the config UI
+export const configSchema = z.object({
+  NAV_LOGIN: z.string().describe("NAV Online Invoice API login username"),
+  NAV_PASSWORD: z.string().describe("NAV Online Invoice API password"),
+  NAV_TAX_NUMBER: z.string().describe("8-digit Hungarian tax number (adoszam)"),
+  NAV_SIGNATURE_KEY: z.string().describe("NAV API XML signature key"),
+  NAV_EXCHANGE_KEY: z.string().describe("NAV API data exchange key"),
+  NAV_ENV: z.enum(["test", "production"]).default("production").describe("NAV environment"),
+  NAV_SOFTWARE_ID: z.string().optional().describe("Registered software ID at NAV"),
+  NAV_SOFTWARE_DEV_NAME: z.string().optional().describe("Software developer name"),
+  NAV_SOFTWARE_DEV_CONTACT: z.string().optional().describe("Software developer contact email"),
+  NAV_SOFTWARE_DEV_TAX_NUMBER: z.string().optional().describe("Software developer tax number"),
+});
 
-function getConfig(config?: SmitheryConfig): NavConfig {
+type SmitheryConfig = z.infer<typeof configSchema>;
+
+function getConfig(config?: Partial<SmitheryConfig>): NavConfig {
   const get = (key: string): string | undefined =>
     config?.[key as keyof SmitheryConfig] || process.env[key];
 
@@ -30,7 +30,7 @@ function getConfig(config?: SmitheryConfig): NavConfig {
   };
 
   const env = get("NAV_ENV");
-  const isTest = !env || env === "test";
+  const isTest = env === "test";
   const baseUrl = isTest
     ? "https://api-test.onlineszamla.nav.gov.hu/invoiceService/v3"
     : "https://api.onlineszamla.nav.gov.hu/invoiceService/v3";
@@ -71,7 +71,8 @@ function formatResponse(result: { funcCode: string; errorCode?: string; message?
   return parts.join("\n");
 }
 
-export default function createServer(config?: SmitheryConfig): McpServer {
+// Smithery calls: default({ config }) — destructured object with config key
+export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
   const server = new McpServer({
     name: "nav-online-invoice",
     version: "1.0.0",
@@ -256,9 +257,20 @@ export default function createServer(config?: SmitheryConfig): McpServer {
     }
   );
 
-  return server;
+  // Smithery expects server.server (the low-level Server instance)
+  return server.server;
 }
 
-export function createSandboxServer(): McpServer {
-  return createServer({});
+// Used by Smithery to scan tools without real credentials
+export function createSandboxServer() {
+  return createServer({
+    config: {
+      NAV_LOGIN: "sandbox",
+      NAV_PASSWORD: "sandbox",
+      NAV_TAX_NUMBER: "00000000",
+      NAV_SIGNATURE_KEY: "sandbox",
+      NAV_EXCHANGE_KEY: "sandbox",
+      NAV_ENV: "test" as const,
+    },
+  });
 }
