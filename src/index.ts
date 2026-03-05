@@ -25,7 +25,7 @@ function getConfig(): NavConfig {
     signatureKey: required("NAV_SIGNATURE_KEY"),
     exchangeKey: required("NAV_EXCHANGE_KEY"),
     baseUrl: process.env.NAV_BASE_URL || baseUrl,
-    softwareId: process.env.NAV_SOFTWARE_ID || "NAVONLINEINVMCP01",
+    softwareId: process.env.NAV_SOFTWARE_ID || "NAVONLINEINVMCP-01",
     softwareName: process.env.NAV_SOFTWARE_NAME || "nav-online-invoice-mcp",
     softwareVersion: process.env.NAV_SOFTWARE_VERSION || "1.0.0",
     softwareDevName: process.env.NAV_SOFTWARE_DEV_NAME || "MCP Developer",

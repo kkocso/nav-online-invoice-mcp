@@ -155,9 +155,11 @@ export function buildQueryInvoiceDigestBody(params: {
 
   return `<page>${params.page}</page>
   <invoiceDirection>${params.invoiceDirection}</invoiceDirection>
-  <mandatoryQueryParams>
-    ${mandatory}
-  </mandatoryQueryParams>${additional}`;
+  <invoiceQueryParams>
+    <mandatoryQueryParams>
+      ${mandatory}
+    </mandatoryQueryParams>${additional}
+  </invoiceQueryParams>`;
 }
 
 export function buildQueryTaxpayerBody(taxNumber: string): string {
