@@ -247,18 +247,14 @@ export function createSandboxServer(): McpServer {
 }
 
 // --- Start Server (stdio mode) ---
+// When run directly (node dist/index.js), starts stdio transport.
+// When imported by Smithery, only the default export (createServer) is used.
 
-const isMainModule = process.argv[1] && (
-  process.argv[1].endsWith("index.js") || process.argv[1].endsWith("index.ts")
-);
-
-if (isMainModule) {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  server.connect(transport).then(() => {
-    console.error("NAV Online Invoice MCP server running on stdio");
-  }).catch((error) => {
-    console.error("Fatal error:", error);
-    process.exit(1);
-  });
-}
+const server = createServer();
+const transport = new StdioServerTransport();
+server.connect(transport).then(() => {
+  console.error("NAV Online Invoice MCP server running on stdio");
+}).catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
