@@ -1,9 +1,24 @@
 import { XMLParser } from "fast-xml-parser";
 
+// Security hardening for XML parsing:
+//
+// processEntities: false  — disables XML entity expansion, preventing "Billion Laughs"
+//                           DoS attacks (CWE-776) and entity injection. NAV API responses
+//                           should never contain custom entities, so this is safe to disable.
+//
+// allowBooleanAttributes: false — prevents attribute injection edge cases.
+//
+// Classic XXE (external entity fetching) is not applicable here because fast-xml-parser
+// is a pure-JS parser that never makes network requests; it has no DTD loader.
+// The processEntities flag handles the entity expansion vector instead.
+//
+// Reference: OWASP XML Security Cheat Sheet
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
   removeNSPrefix: true,
+  processEntities: false,
+  allowBooleanAttributes: false,
   isArray: (name) => {
     const arrayElements = [
       "invoiceDigest",

@@ -1,3 +1,6 @@
+// SHA-512: use Node.js built-in crypto (no external dependency needed)
+// SHA3-512: use js-sha3 (Node.js built-in crypto does not support SHA3 in all versions)
+// NOTE: js-sha512 is intentionally NOT used — native crypto covers SHA-512
 import { createHash, createDecipheriv, randomBytes } from "node:crypto";
 import { sha3_512 } from "js-sha3";
 

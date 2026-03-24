@@ -1,5 +1,23 @@
 node_modules/
 dist/
 .env
+.env.*
+!.env.example
 *.tgz
 .smithery/
+
+# Credentials and key files
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.cer
+
+# Log files (may contain PII or sensitive response data)
+*.log
+logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

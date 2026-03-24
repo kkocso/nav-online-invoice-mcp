@@ -24,14 +24,31 @@ export class NavClient {
 
   private async sendRequest(
     endpoint: string,
-    xml: string
+    xml: string,
+    timeoutMs: number = 30_000
   ): Promise<{ parsed: Record<string, unknown>; rawXml: string }> {
     const url = `${this.config.baseUrl}/${endpoint}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/xml", Accept: "application/xml" },
-      body: xml,
-    });
+
+    // Abort controller for request timeout — prevents hanging on slow/unresponsive NAV API
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/xml", Accept: "application/xml" },
+        body: xml,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") {
+        throw new Error(`NAV API request to "${endpoint}" timed out after ${timeoutMs}ms`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const rawXml = await response.text();
     const parsed = parseXmlResponse(rawXml);
@@ -45,8 +62,11 @@ export class NavClient {
 
     const result = extractResult(parsed);
     if (result.funcCode !== "OK") {
+      // Do NOT include rawXml in the error message — may contain credential hashes
       throw new Error(
-        `tokenExchange failed: ${result.errorCode || ""} ${result.message || rawXml}`
+        `tokenExchange failed: funcCode=${result.funcCode}` +
+        (result.errorCode ? ` errorCode=${result.errorCode}` : "") +
+        (result.message ? ` message=${result.message}` : "")
       );
     }
 
