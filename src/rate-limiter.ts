@@ -94,6 +94,7 @@ export class RateLimiter {
     const windowStart = now - this.config.windowMs;
     const result: Record<string, number> = {};
     for (const [op, timestamps] of this.windows) {
+      // eslint-disable-next-line security/detect-object-injection -- op comes from this.windows Map keys, not user input
       result[op] = timestamps.filter((t) => t > windowStart).length;
     }
     return result;

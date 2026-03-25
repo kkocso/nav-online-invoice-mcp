@@ -40,6 +40,7 @@ function validateBaseUrl(url: string): string {
 
 function getConfig(config?: Partial<SmitheryConfig>): NavConfig {
   const get = (key: string): string | undefined =>
+    // eslint-disable-next-line security/detect-object-injection -- key is a hardcoded config/env var name, not user input
     config?.[key as keyof SmitheryConfig] || process.env[key];
 
   const required = (key: string): string => {

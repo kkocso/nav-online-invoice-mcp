@@ -58,11 +58,11 @@ export class NavClient {
   async tokenExchange(): Promise<{ token: string; validFrom: string; validTo: string }> {
     const body = buildTokenExchangeBody();
     const { xml } = buildRequest("TokenExchange", this.config, body);
-    const { parsed, rawXml } = await this.sendRequest("tokenExchange", xml);
+    const { parsed } = await this.sendRequest("tokenExchange", xml);
 
     const result = extractResult(parsed);
     if (result.funcCode !== "OK") {
-      // Do NOT include rawXml in the error message — may contain credential hashes
+      // Do NOT include raw XML in the error message — may contain credential hashes
       throw new Error(
         `tokenExchange failed: funcCode=${result.funcCode}` +
         (result.errorCode ? ` errorCode=${result.errorCode}` : "") +

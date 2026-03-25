@@ -27,6 +27,7 @@ function validateBaseUrl(url: string): string {
 
 function getConfig(): NavConfig {
   const required = (key: string): string => {
+    // eslint-disable-next-line security/detect-object-injection -- key is a hardcoded env var name, not user input
     const val = process.env[key];
     if (!val) throw new Error(`Missing required environment variable: ${key}`);
     return val;

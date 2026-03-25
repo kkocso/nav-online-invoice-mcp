@@ -53,6 +53,7 @@ export function extractResult(parsed: Record<string, unknown>): {
     return { funcCode: "ERROR", message: "Invalid response structure" };
   }
 
+  // eslint-disable-next-line security/detect-object-injection -- rootKey is validated via .find() against trusted parsed XML keys
   const root = parsed[rootKey] as Record<string, unknown>;
   const result = root.result as Record<string, unknown> | undefined;
 
@@ -74,5 +75,6 @@ export function extractResponseData(
 ): Record<string, unknown> | undefined {
   const rootKey = Object.keys(parsed).find((k) => k.endsWith("Response"));
   if (!rootKey) return undefined;
+  // eslint-disable-next-line security/detect-object-injection -- rootKey is validated via .find() against trusted parsed XML keys
   return parsed[rootKey] as Record<string, unknown>;
 }

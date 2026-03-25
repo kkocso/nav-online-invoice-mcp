@@ -68,8 +68,8 @@ const INJECTION_PATTERNS: RegExp[] = [
 
   // Data exfiltration patterns
   /repeat\s+(everything|all)\s+(above|before|prior)/i,
-  /print\s+(your|the)\s+(system\s+)?prompt/i,
-  /reveal\s+(your|the)\s+(system\s+)?prompt/i,
+  /print\s+(your|the)\s+(?:system\s)?prompt/i,
+  /reveal\s+(your|the)\s+(?:system\s)?prompt/i,
 ];
 
 export interface SanitizeResult {
@@ -109,8 +109,10 @@ export function sanitizeApiResponse(data: unknown): SanitizeResult {
       for (const [k, v] of Object.entries(sanitized as Record<string, unknown>)) {
         const fieldJson = JSON.stringify(v);
         if (fieldJson && fieldJson.length <= 1_000) {
+          // eslint-disable-next-line security/detect-object-injection -- k comes from Object.entries(), not user input
           truncated[k] = v;
         } else {
+          // eslint-disable-next-line security/detect-object-injection -- k comes from Object.entries(), not user input
           truncated[k] = "[truncated — field too large]";
         }
       }
@@ -144,6 +146,7 @@ function sanitizeValue(value: unknown, path: string, warnings: string[]): unknow
     const result: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       const childPath = path ? `${path}.${k}` : k;
+      // eslint-disable-next-line security/detect-object-injection -- k comes from Object.entries(), not user input
       result[k] = sanitizeValue(v, childPath, warnings);
     }
     return result;
@@ -156,6 +159,7 @@ function sanitizeValue(value: unknown, path: string, warnings: string[]): unknow
 function sanitizeString(s: string, path: string, warnings: string[]): string {
   // 1. Strip null bytes and C0/C1 control characters.
   //    Keep \t (0x09), \n (0x0A), \r (0x0D) — common in address / text fields.
+  // eslint-disable-next-line no-control-regex -- intentional: this code exists specifically to strip control characters
   let clean = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\x80-\x9F]/g, "");
 
   // 2. Prompt injection pattern detection and neutralization.
