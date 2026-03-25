@@ -9,6 +9,11 @@ on:
     # Run weekly on Monday at 08:00 UTC even without new commits
     - cron: "0 8 * * 1"
 
+# Opt into Node.js 24 for GitHub Actions runners (actions/checkout, actions/setup-node).
+# Node.js 20-based actions are deprecated and will be forced to Node.js 24 from June 2026.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Restrict default GITHUB_TOKEN permissions to read-only (OpenSSF Scorecard: Token-Permissions)
 # Individual jobs that need write access must declare it explicitly.
 permissions:
